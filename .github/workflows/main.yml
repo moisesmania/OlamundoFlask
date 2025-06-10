@@ -1,18 +1,18 @@
-name: Deploy Flask App
+name: Teste Flask no GitHub Actions
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  build-and-run:
+  test-flask:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout do código
+    - name: Fazer checkout do código
       uses: actions/checkout@v3
 
-    - name: Configurar o Python
+    - name: Configurar Python 3.11
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
@@ -22,8 +22,19 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Rodar aplicação Flask
+    - name: Iniciar servidor Flask em background
       run: |
-        nohup python app.py &
-        sleep 10
-        curl http://127.0.0.1:5000
+        nohup python app.py > flask.log 2>&1 &
+        # espera subir
+        sleep 8
+
+    - name: Testar endpoint e mostrar saída
+      run: |
+        echo "Resposta do servidor:"
+        curl -i http://127.0.0.1:5000 || exit 1
+
+    - name: Mostrar logs completos do Flask
+      if: failure() || success()
+      run: |
+        echo "=== flask.log ==="
+        cat flask.log
